@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Neraca Ajaib: Cari Bilangan yang Hilang</title>
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#F2F7EA; --surface:#FFFFFF; --ink:#1E2B17; --muted:#5B6B52; --line:#CFDDBE;
+  --green:#3F7D3A; --green-d:#2A5A27; --board:#E6F0D5; --yellow:#F6C945; --coral:#D9482B; --blue:#2F78B8;
+  --ok:#2E7D32; --okbg:#DDF1DB; --warn:#8A5A00; --warnbg:#FFF1CC; --bad:#A93226; --badbg:#FCE0DB;
+  --btn-ink:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121A10; --surface:#1B2618; --ink:#EAF3DF; --muted:#A5B898; --line:#33452D;
+    --green:#7DC46F; --green-d:#A8DE9C; --board:#223020; --yellow:#F2C94C; --coral:#FF8A6B; --blue:#6FB4EA;
+    --ok:#8FE08A; --okbg:#1F3A1E; --warn:#F2C94C; --warnbg:#3A3010; --bad:#FF9C8A; --badbg:#442019;
+    --btn-ink:#10200E;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121A10; --surface:#1B2618; --ink:#EAF3DF; --muted:#A5B898; --line:#33452D;
+  --green:#7DC46F; --green-d:#A8DE9C; --board:#223020; --yellow:#F2C94C; --coral:#FF8A6B; --blue:#6FB4EA;
+  --ok:#8FE08A; --okbg:#1F3A1E; --warn:#F2C94C; --warnbg:#3A3010; --bad:#FF9C8A; --badbg:#442019;
+  --btn-ink:#10200E;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;font-size:17px;line-height:1.5}
+.wrap{max-width:720px;margin:0 auto;padding:14px 14px 40px}
+header{padding:6px 2px 10px}
+h1{font-size:1.55rem;line-height:1.2;margin:0 0 4px;color:var(--green-d)}
+.sub{margin:0;color:var(--muted);font-size:.95rem}
+.level{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:12px 0 4px}
+.level span{font-size:.9rem;color:var(--muted)}
+.chip{border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:6px 14px;font:inherit;font-size:.9rem;cursor:pointer;min-height:40px}
+.chip[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:var(--btn-ink);font-weight:700}
+.tabs{display:flex;gap:6px;overflow-x:auto;padding:8px 0;margin:6px 0 10px;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:0 0 auto;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:9px 14px;font:inherit;font-size:.95rem;cursor:pointer;min-height:44px}
+.tab[aria-selected="true"]{background:var(--yellow);border-color:var(--yellow);color:#2B2300;font-weight:700}
+button:focus-visible,input:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.panel{background:var(--surface);border:2px solid var(--line);border-radius:18px;padding:16px}
+.panel[hidden]{display:none}
+.eq{font-size:2rem;font-weight:700;text-align:center;margin:2px 0 8px;letter-spacing:.02em}
+.eq .q{color:var(--coral)}
+.help{color:var(--muted);font-size:.95rem;margin:0 0 8px;text-align:center}
+svg{display:block;width:100%;height:auto}
+.stepper{display:flex;align-items:center;justify-content:center;gap:8px;margin:6px 0 4px}
+.sbtn{min-width:56px;min-height:56px;border-radius:14px;border:2px solid var(--green);background:var(--surface);color:var(--green-d);font:inherit;font-size:1.25rem;font-weight:700;cursor:pointer}
+.sbtn:active{background:var(--board)}
+.val{min-width:84px;text-align:center;font-size:2.4rem;font-weight:700;color:var(--coral);border-bottom:4px solid var(--coral)}
+.msg{margin:12px 0 4px;padding:12px 14px;border-radius:12px;font-weight:600;background:var(--board);min-height:50px}
+.msg.ok{background:var(--okbg);color:var(--ok)}
+.msg.warn{background:var(--warnbg);color:var(--warn)}
+.msg.bad{background:var(--badbg);color:var(--bad)}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.btn{border:0;border-radius:12px;padding:12px 18px;font:inherit;font-weight:700;cursor:pointer;min-height:48px;background:var(--green);color:var(--btn-ink)}
+.btn.alt{background:transparent;color:var(--green-d);border:2px solid var(--green)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.story{font-size:1.05rem;margin:0 0 12px}
+.opts{display:grid;gap:8px;margin:8px 0}
+.opt{text-align:center;border:2px solid var(--line);background:var(--surface);color:var(--ink);border-radius:12px;padding:12px;font:inherit;font-size:1.15rem;font-weight:700;cursor:pointer;min-height:52px}
+.opt.right{border-color:var(--ok);background:var(--okbg);color:var(--ok)}
+.opt.wrong{border-color:var(--bad);background:var(--badbg);color:var(--bad)}
+.answer{display:flex;gap:8px;align-items:center;margin-top:8px}
+.answer input{flex:1;min-width:0;font:inherit;font-size:1.3rem;padding:10px 12px;border:2px solid var(--line);border-radius:12px;background:var(--surface);color:var(--ink)}
+.score{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem;margin-bottom:10px}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.stmt{font-size:1.9rem;font-weight:700;text-align:center;margin:8px 0}
+.final{text-align:center;padding:10px 0}
+.final .big{font-size:2.6rem;font-weight:700;color:var(--green-d)}
+.hint{margin-top:10px;font-size:.95rem;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Neraca Ajaib</h1>
+  <p class="sub">Matematika Kelas IV · Persamaan sederhana: cari bilangan yang hilang</p>
+  <div class="level" role="group" aria-label="Pilih tingkat">
+    <span>Tingkat:</span>
+    <button class="chip" data-level="20" aria-pressed="false">Sampai 20</button>
+    <button class="chip" data-level="50" aria-pressed="true">Sampai 50</button>
+    <button class="chip" data-level="100" aria-pressed="false">Sampai 100</button>
+  </div>
+</header>
+
+<div class="tabs" role="tablist" aria-label="Kegiatan">
+  <button class="tab" role="tab" id="t-neraca" aria-selected="true" aria-controls="p-neraca">Neraca</button>
+  <button class="tab" role="tab" id="t-garis" aria-selected="false" aria-controls="p-garis">Garis bilangan</button>
+  <button class="tab" role="tab" id="t-cerita" aria-selected="false" aria-controls="p-cerita">Soal cerita</button>
+  <button class="tab" role="tab" id="t-tf" aria-selected="false" aria-controls="p-tf">Benar atau salah</button>
+</div>
+
+<!-- NERACA -->
+<section class="panel" id="p-neraca" role="tabpanel" aria-labelledby="t-neraca">
+  <div class="eq" id="n-eq"></div>
+  <p class="help">Ubah bilangan pengganti tanda tanya sampai neraca seimbang.</p>
+  <svg id="n-svg" viewBox="0 0 360 250" role="img" aria-label="Neraca dua sisi"></svg>
+  <div class="stepper" id="n-step"></div>
+  <div class="msg" id="n-msg" aria-live="polite"></div>
+  <div class="row">
+    <button class="btn alt" id="n-hint">Petunjuk</button>
+    <button class="btn" id="n-next">Soal baru</button>
+  </div>
+  <div class="hint" id="n-hinttext" hidden></div>
+</section>
+
+<!-- GARIS -->
+<section class="panel" id="p-garis" role="tabpanel" aria-labelledby="t-garis" hidden>
+  <div class="eq" id="g-eq"></div>
+  <p class="help">Loncat pada garis bilangan sampai tepat di bilangan tujuan.</p>
+  <svg id="g-svg" viewBox="0 0 360 150" role="img" aria-label="Garis bilangan 0 sampai 30"></svg>
+  <div class="stepper" id="g-step"></div>
+  <div class="msg" id="g-msg" aria-live="polite"></div>
+  <div class="row"><button class="btn" id="g-next">Soal baru</button></div>
+</section>
+
+<!-- CERITA -->
+<section class="panel" id="p-cerita" role="tabpanel" aria-labelledby="t-cerita" hidden>
+  <div id="c-body"></div>
+</section>
+
+<!-- BENAR SALAH -->
+<section class="panel" id="p-tf" role="tabpanel" aria-labelledby="t-tf" hidden>
+  <div id="f-body"></div>
+</section>
+</div>
+
+<script>
+(function(){
+"use strict";
+var $=function(s,r){return (r||document).querySelector(s)};
+var rnd=function(a,b){return Math.floor(Math.random()*(b-a+1))+a};
+var pick=function(arr){return arr[rnd(0,arr.length-1)]};
+var MAX=50;
+var reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- soal persamaan ---------- */
+function gen(max,kinds){
+  var k=pick(kinds||["add1","add2","sub1","sub2"]),a,b,x,c,d;
+  if(k==="add1"){a=rnd(1,max-1);x=rnd(1,max-a);c=a+x;return{k:k,a:a,x:x,c:c,left:function(v){return a+v},right:c,lab:a+" + ?",eq:function(s){return a+" + "+s+" = "+c},hint:c+" − "+a+" = ?",full:a+" + "+x+" = "+c}}
+  if(k==="add2"){b=rnd(1,max-1);x=rnd(1,max-b);c=b+x;return{k:k,b:b,x:x,c:c,left:function(v){return v+b},right:c,lab:"? + "+b,eq:function(s){return s+" + "+b+" = "+c},hint:c+" − "+b+" = ?",full:x+" + "+b+" = "+c}}
+  if(k==="sub1"){a=rnd(2,max);x=rnd(1,a-1);d=a-x;return{k:k,a:a,x:x,c:d,left:function(v){return a-v},right:d,lab:a+" − ?",eq:function(s){return a+" − "+s+" = "+d},hint:a+" − "+d+" = ?",full:a+" − "+x+" = "+d}}
+  x=rnd(2,max);b=rnd(1,x-1);d=x-b;return{k:"sub2",b:b,x:x,c:d,left:function(v){return v-b},right:d,lab:"? − "+b,eq:function(s){return s+" − "+b+" = "+d},hint:d+" + "+b+" = ?",full:x+" − "+b+" = "+d};
+}
+function stepper(el,onchange,steps){
+  steps=steps||[-10,-1,1,10];
+  var h="";
+  h+='<button class="sbtn" data-s="-10" aria-label="kurangi 10">−10</button><button class="sbtn" data-s="-1" aria-label="kurangi 1">−1</button><div class="val" aria-live="polite">0</div><button class="sbtn" data-s="1" aria-label="tambah 1">+1</button><button class="sbtn" data-s="10" aria-label="tambah 10">+10</button>';
+  el.innerHTML=h;
+  var btns=el.querySelectorAll(".sbtn");
+  for(var i=0;i<btns.length;i++){btns[i].addEventListener("click",function(){onchange(parseInt(this.getAttribute("data-s"),10))})}
+  return {set:function(v){el.querySelector(".val").textContent=v}};
+}
+
+/* ---------- NERACA ---------- */
+var N={p:null,v:0,touched:false,theta:0,raf:0,done:false};
+var nsvg=$("#n-svg");
+function nTarget(){var L=N.p.left(N.v),R=N.p.right,diff=L-R;if(diff===0)return 0;var m=Math.min(16,3+Math.abs(diff)*1.2);return diff>0?m:-m}
+function drawN(th){
+  var cx=180,py=62,half=120,rad=th*Math.PI/180;
+  var lx=cx-half*Math.cos(rad),ly=py+half*Math.sin(rad),rx=cx+half*Math.cos(rad),ry=py-half*Math.sin(rad);
+  var drop=62,pw=116,ph=46;
+  var Lv=N.p.left(N.v),Rv=N.p.right;
+  var lt=N.touched?N.p.lab.replace("?",N.v):N.p.lab;
+  var s='';
+  s+='<polygon points="'+(cx-16)+',235 '+(cx+16)+',235 '+cx+','+py+'" fill="var(--green)"/>';
+  s+='<rect x="'+(cx-60)+'" y="232" width="120" height="10" rx="5" fill="var(--green-d)"/>';
+  s+='<line x1="'+lx+'" y1="'+ly+'" x2="'+rx+'" y2="'+ry+'" stroke="var(--green-d)" stroke-width="8" stroke-linecap="round"/>';
+  s+='<circle cx="'+cx+'" cy="'+py+'" r="10" fill="var(--yellow)" stroke="var(--green-d)" stroke-width="3"/>';
+  [[lx,ly,lt,N.touched?"= "+Lv:"",false],[rx,ry,String(Rv),"",true]].forEach(function(e){
+    var x=e[0],y=e[1];
+    s+='<line x1="'+x+'" y1="'+y+'" x2="'+(x-pw/2+8)+'" y2="'+(y+drop)+'" stroke="var(--green-d)" stroke-width="2"/>';
+    s+='<line x1="'+x+'" y1="'+y+'" x2="'+(x+pw/2-8)+'" y2="'+(y+drop)+'" stroke="var(--green-d)" stroke-width="2"/>';
+    s+='<rect x="'+(x-pw/2)+'" y="'+(y+drop)+'" width="'+pw+'" height="'+ph+'" rx="12" fill="'+(e[4]?"var(--blue)":"var(--green)")+'"/>';
+    s+='<text x="'+x+'" y="'+(y+drop+(e[3]?21:30))+'" text-anchor="middle" font-size="'+(e[3]?20:24)+'" font-weight="700" fill="#fff">'+e[2]+'</text>';
+    if(e[3]) s+='<text x="'+x+'" y="'+(y+drop+39)+'" text-anchor="middle" font-size="15" font-weight="700" fill="#FFF3B0">'+e[3]+'</text>';
+  });
+  nsvg.innerHTML=s;
+}
+function animN(target){
+  cancelAnimationFrame(N.raf);
+  if(reduce){N.theta=target;drawN(N.theta);return}
+  (function f(){var d=target-N.theta;if(Math.abs(d)<.3){N.theta=target;drawN(N.theta);return}N.theta+=d*.2;drawN(N.theta);N.raf=requestAnimationFrame(f)})();
+}
+var nStep=stepper($("#n-step"),function(s){
+  if(N.done)return;
+  N.touched=true;N.v=Math.max(0,Math.min(MAX,N.v+s));nStep.set(N.v);nUpdate();
+});
+function nUpdate(){
+  var L=N.p.left(N.v),R=N.p.right,m=$("#n-msg");
+  animN(nTarget());
+  $("#n-eq").innerHTML=N.p.eq(N.touched?'<span class="q">'+N.v+'</span>':'<span class="q">?</span>');
+  if(N.touched&&L===R){
+    N.done=true;m.className="msg ok";
+    m.textContent="Seimbang! Bilangan yang hilang adalah "+N.p.x+". Periksa: "+N.p.full+".";
+  }else if(!N.touched){m.className="msg";m.textContent="Tekan tombol + atau − untuk mencoba bilangan."}
+  else if(L>R){m.className="msg warn";m.textContent="Sisi kiri lebih berat daripada sisi kanan ("+L+" lebih besar dari "+R+")."}
+  else{m.className="msg warn";m.textContent="Sisi kiri lebih ringan daripada sisi kanan ("+L+" lebih kecil dari "+R+")."}
+}
+function nNew(){
+  N.p=gen(MAX);N.v=0;N.touched=false;N.done=false;N.theta=0;
+  nStep.set(0);$("#n-hinttext").hidden=true;$("#n-hint").textContent="Petunjuk";
+  nUpdate();
+}
+$("#n-next").addEventListener("click",nNew);
+$("#n-hint").addEventListener("click",function(){
+  var h=$("#n-hinttext");h.hidden=!h.hidden;
+  h.textContent="Gunakan operasi kebalikan (invers): "+N.p.hint;
+  this.textContent=h.hidden?"Petunjuk":"Sembunyikan petunjuk";
+});
+
+/* ---------- GARIS BILANGAN ---------- */
+var G={p:null,v:0,touched:false,done:false};
+var gsvg=$("#g-svg");
+function gGen(){
+  var p=gen(30,["add1","sub1"]);
+  return p;
+}
+function drawG(){
+  var x0=14,step=(360-28)/30,y=96,s='',a=G.p.k==="add1"?G.p.a:G.p.a;
+  s+='<line x1="'+x0+'" y1="'+y+'" x2="'+(x0+30*step)+'" y2="'+y+'" stroke="var(--green-d)" stroke-width="3" stroke-linecap="round"/>';
+  for(var i=0;i<=30;i++){
+    var x=x0+i*step,big=i%5===0;
+    s+='<line x1="'+x+'" y1="'+(y-(big?9:5))+'" x2="'+x+'" y2="'+(y+(big?9:5))+'" stroke="var(--green-d)" stroke-width="'+(big?2:1)+'"/>';
+    if(big)s+='<text x="'+x+'" y="'+(y+26)+'" text-anchor="middle" font-size="12" fill="var(--muted)">'+i+'</text>';
+  }
+  var start=G.p.a,end=G.p.k==="add1"?start+G.v:start-G.v,xs=x0+start*step,xe=x0+end*step,xt=x0+G.p.c*step;
+  s+='<circle cx="'+xt+'" cy="'+y+'" r="9" fill="none" stroke="var(--blue)" stroke-width="3" stroke-dasharray="4 3"/>';
+  s+='<text x="'+xt+'" y="'+(y-38)+'" text-anchor="middle" font-size="13" font-weight="700" fill="var(--blue)">tujuan '+G.p.c+'</text>';
+  if(G.touched&&G.v>0){
+    var mid=(xs+xe)/2,h=46;
+    s+='<path d="M'+xs+' '+(y-6)+' Q '+mid+' '+(y-h-20)+' '+xe+' '+(y-6)+'" fill="none" stroke="var(--coral)" stroke-width="3"/>';
+    s+='<text x="'+mid+'" y="'+(y-h+2)+'" text-anchor="middle" font-size="15" font-weight="700" fill="var(--coral)">'+(G.p.k==="add1"?"+":"−")+G.v+'</text>';
+  }
+  s+='<circle cx="'+xs+'" cy="'+y+'" r="6" fill="var(--yellow)" stroke="var(--green-d)" stroke-width="2"/>';
+  s+='<text x="'+xs+'" y="'+(y+44)+'" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)">mulai '+start+'</text>';
+  if(G.touched&&G.v>0)s+='<circle cx="'+xe+'" cy="'+y+'" r="7" fill="var(--coral)"/>';
+  gsvg.innerHTML=s;
+}
+var gStep=stepper($("#g-step"),function(s){
+  if(G.done)return;
+  var lim=G.p.k==="add1"?30-G.p.a:G.p.a;
+  G.touched=true;G.v=Math.max(0,Math.min(lim,G.v+s));gStep.set(G.v);gUpdate();
+});
+function gUpdate(){
+  var m=$("#g-msg"),end=G.p.k==="add1"?G.p.a+G.v:G.p.a-G.v;
+  $("#g-eq").innerHTML=G.p.eq('<span class="q">'+(G.touched?G.v:"?")+'</span>');
+  drawG();
+  if(G.touched&&end===G.p.c){G.done=true;m.className="msg ok";m.textContent="Tepat! Kamu loncat "+G.p.x+" langkah. Periksa: "+G.p.full+"."}
+  else if(!G.touched){m.className="msg";m.textContent="Tekan + atau − untuk menambah langkah loncatan."}
+  else{m.className="msg warn";m.textContent="Sekarang berada di "+end+(end<G.p.c?", masih kurang dari "+G.p.c+".":", sudah melewati "+G.p.c+".")}
+}
+function gNew(){G.p=gGen();G.v=0;G.touched=false;G.done=false;gStep.set(0);gUpdate()}
+$("#g-next").addEventListener("click",gNew);
+
+/* ---------- SOAL CERITA ---------- */
+var names=["Andi","Dina","Rani","Beni","Sita","Budi"],objs=["kelereng","stiker","jeruk","buku","pensil","kue"];
+var C={i:0,score:0,q:null,step:1,tried1:false,tried2:false,ok1:false,ok2:false,total:5};
+function cGen(){
+  var p=gen(MAX),n=pick(names),o=pick(objs),t,text,sent,dis;
+  if(p.k==="add1"){text=n+" punya "+p.a+" "+o+". Ia ingin punya "+p.c+" "+o+". Berapa "+o+" lagi yang harus ditambah?";sent=p.a+" + ? = "+p.c;dis=["? − "+p.a+" = "+p.c,p.a+" + "+p.c+" = ?"]}
+  else if(p.k==="add2"){text=n+" punya beberapa "+o+". Setelah diberi teman "+p.b+" "+o+", jumlahnya menjadi "+p.c+". Berapa "+o+" "+n+" mula-mula?";sent="? + "+p.b+" = "+p.c;dis=["? − "+p.b+" = "+p.c,p.b+" + "+p.c+" = ?"]}
+  else if(p.k==="sub1"){text=n+" punya "+p.a+" "+o+". Ia memberikan beberapa kepada adik, sisanya "+p.c+" "+o+". Berapa "+o+" yang diberikan?";sent=p.a+" − ? = "+p.c;dis=[p.a+" + ? = "+p.c,"? − "+p.a+" = "+p.c]}
+  else{text=n+" membawa beberapa "+o+". Setelah "+p.b+" "+o+" diberikan, sisanya "+p.c+". Berapa "+o+" yang dibawa mula-mula?";sent="? − "+p.b+" = "+p.c;dis=["? + "+p.b+" = "+p.c,p.b+" − "+p.c+" = ?"]}
+  var opts=[{t:sent,ok:true},{t:dis[0],ok:false},{t:dis[1],ok:false}].sort(function(){return Math.random()-.5});
+  return{p:p,text:text,opts:opts,unit:o};
+}
+function cRender(){
+  var b=$("#c-body");
+  if(C.i>=C.total){
+    var msg=C.score>=4?"Hebat! Kamu sudah paham persamaan sederhana.":C.score>=3?"Bagus! Latihan sekali lagi supaya makin mantap.":"Ayo coba lagi dan gunakan petunjuk operasi kebalikan.";
+    b.innerHTML='<div class="final"><div>Skor kamu</div><div class="big">'+C.score+' / '+C.total+'</div><p>'+msg+'</p><div class="row" style="justify-content:center"><button class="btn" id="c-again">Main lagi</button></div></div>';
+    $("#c-again").addEventListener("click",cStart);return;
+  }
+  var q=C.q,h='<div class="score"><span>Soal '+(C.i+1)+' dari '+C.total+'</span><span>Skor: '+C.score+'</span></div>';
+  h+='<p class="story">'+q.text+'</p><p><b>1.</b> Pilih kalimat matematika yang tepat:</p><div class="opts" id="c-opts">';
+  q.opts.forEach(function(o,i){h+='<button class="opt" data-i="'+i+'">'+o.t+'</button>'});
+  h+='</div>';
+  h+='<div id="c-step2" hidden><p><b>2.</b> Berapa bilangan yang hilang?</p><div class="answer"><input id="c-in" type="number" inputmode="numeric" aria-label="Jawaban"><button class="btn" id="c-check">Periksa</button></div></div>';
+  h+='<div class="msg" id="c-msg" aria-live="polite">Pilih salah satu kalimat matematika.</div><div class="row"><button class="btn" id="c-next" hidden>Lanjut</button></div>';
+  b.innerHTML=h;
+  C.step=1;C.tried1=false;C.tried2=false;C.ok1=false;C.ok2=false;
+  var ob=b.querySelectorAll(".opt");
+  for(var i=0;i<ob.length;i++){ob[i].addEventListener("click",function(){
+    if(C.step!==1)return;var o=q.opts[parseInt(this.getAttribute("data-i"),10)],m=$("#c-msg");
+    if(o.ok){this.classList.add("right");C.step=2;if(!C.tried1)C.ok1=true;$("#c-step2").hidden=false;m.className="msg ok";m.textContent="Benar! Sekarang cari bilangan yang hilang dengan operasi kebalikan.";$("#c-in").focus()}
+    else{this.classList.add("wrong");C.tried1=true;m.className="msg warn";m.textContent="Belum tepat. Baca ceritanya lagi: mana yang belum diketahui?"}
+  })}
+  $("#c-check").addEventListener("click",cCheck);
+  $("#c-in").addEventListener("keydown",function(e){if(e.key==="Enter")cCheck()});
+  $("#c-next").addEventListener("click",function(){C.i++;if(C.i<C.total)C.q=cGen();cRender()});
+}
+function cCheck(){
+  var v=parseInt($("#c-in").value,10),m=$("#c-msg");
+  if(isNaN(v)){m.className="msg warn";m.textContent="Tulis angka jawabanmu dulu.";return}
+  if(v===C.q.p.x){
+    if(C.ok1&&!C.tried2){C.score++}
+    m.className="msg ok";m.textContent="Benar! "+C.q.p.full+". Jawabannya "+C.q.p.x+" "+C.q.unit+".";
+    $("#c-check").disabled=true;$("#c-in").disabled=true;$("#c-next").hidden=false;$("#c-next").textContent=C.i+1>=C.total?"Lihat skor":"Soal berikutnya";
+  }else{C.tried2=true;m.className="msg warn";m.textContent="Belum tepat. Petunjuk: "+C.q.p.hint}
+}
+function cStart(){C.i=0;C.score=0;C.q=cGen();cRender()}
+
+/* ---------- BENAR ATAU SALAH ---------- */
+var F={i:0,score:0,q:null,total:8,answered:false};
+function fGen(){
+  var m=MAX,t=Math.random()<.5,s=Math.random()<.65,a,b,c,d,T;
+  if(s){
+    a=rnd(2,m-2);b=rnd(1,m-a);T=a+b;c=rnd(1,T-1);d=T-c;
+    var L=a+" + "+b,R=c+" + "+d,Lv=a+b,Rv=T;
+    if(!t){d=d+pick([-3,-2,-1,1,2,3]);if(d<1)d=d+4;Rv=c+d;R=c+" + "+d}
+    return{l:L,r:R,lv:Lv,rv:Rv,ok:Lv===Rv}
+  }
+  a=rnd(5,m);b=rnd(1,a-1);var k=a-b;c=rnd(k+1,m);d=c-k;
+  var Rv2=c-d,L2=a+" − "+b,R2=c+" − "+d;
+  if(!t){d=d+pick([-3,-2,-1,1,2,3]);if(d<1||d>=c)d=Math.max(1,Math.min(c-1,d+4));Rv2=c-d;R2=c+" − "+d}
+  return{l:L2,r:R2,lv:k,rv:Rv2,ok:k===Rv2};
+}
+function fRender(){
+  var b=$("#f-body");
+  if(F.i>=F.total){
+    var msg=F.score>=7?"Luar biasa! Kamu paham arti tanda sama dengan.":F.score>=5?"Bagus! Ingat: kedua sisi harus bernilai sama.":"Ayo coba lagi. Hitung nilai kedua sisi dulu.";
+    b.innerHTML='<div class="final"><div>Skor kamu</div><div class="big">'+F.score+' / '+F.total+'</div><p>'+msg+'</p><div class="row" style="justify-content:center"><button class="btn" id="f-again">Main lagi</button></div></div>';
+    $("#f-again").addEventListener("click",fStart);return;
+  }
+  var q=F.q;F.answered=false;
+  b.innerHTML='<div class="score"><span>Soal '+(F.i+1)+' dari '+F.total+'</span><span>Skor: '+F.score+'</span></div><p class="help">Apakah kalimat ini benar?</p><div class="stmt">'+q.l+' = '+q.r+'</div><div class="tf"><button class="opt" id="f-y">Benar</button><button class="opt" id="f-n">Salah</button></div><div class="msg" id="f-msg" aria-live="polite">Hitung nilai sisi kiri dan sisi kanan, lalu bandingkan.</div><div class="row"><button class="btn" id="f-next" hidden>Lanjut</button></div>';
+  function ans(v){
+    if(F.answered)return;F.answered=true;var good=(v===q.ok),m=$("#f-msg");
+    if(good)F.score++;
+    $(v?"#f-y":"#f-n").classList.add(good?"right":"wrong");
+    m.className="msg "+(good?"ok":"bad");
+    m.textContent=(good?"Benar! ":"Belum tepat. ")+"Sisi kiri: "+q.l+" = "+q.lv+". Sisi kanan: "+q.r+" = "+q.rv+". "+(q.ok?"Nilainya sama, jadi kalimat ini benar.":"Nilainya tidak sama, jadi kalimat ini salah.");
+    var n=$("#f-next");n.hidden=false;n.textContent=F.i+1>=F.total?"Lihat skor":"Soal berikutnya";
+  }
+  $("#f-y").addEventListener("click",function(){ans(true)});
+  $("#f-n").addEventListener("click",function(){ans(false)});
+  $("#f-next").addEventListener("click",function(){F.i++;if(F.i<F.total)F.q=fGen();fRender()});
+}
+function fStart(){F.i=0;F.score=0;F.q=fGen();fRender()}
+
+/* ---------- tab & level ---------- */
+var tabs=["neraca","garis","cerita","tf"];
+tabs.forEach(function(n){
+  $("#t-"+n).addEventListener("click",function(){
+    tabs.forEach(function(m){var on=m===n;$("#t-"+m).setAttribute("aria-selected",on);$("#p-"+m).hidden=!on});
+  });
+});
+var chips=document.querySelectorAll(".chip");
+for(var i=0;i<chips.length;i++){chips[i].addEventListener("click",function(){
+  MAX=parseInt(this.getAttribute("data-level"),10);
+  for(var j=0;j<chips.length;j++)chips[j].setAttribute("aria-pressed",chips[j]===this);
+  nNew();cStart();fStart();
+})}
+nNew();gNew();cStart();fStart();
+})();
+</script>
+</body>
+</html>
